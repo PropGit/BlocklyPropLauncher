@@ -270,11 +270,11 @@ function updateStatus(connected, socket) {
     if (connected) {
         $('sys-waiting').style.opacity=0.0;
         $('sys-connected').style.opacity=1.0;
-        log('BlocklyProp site connected on socket: ' + socket.pSocket_.socketId);
+        log('[S:'+socket.pSocket_.socketId+'] - site connected');
     } else {
         $('sys-waiting').style.opacity=1.0;
         $('sys-connected').style.opacity=0.0;
-        log('BlocklyProp site disconnected from socket: ' + socket.pSocket_.socketId);
+        log('[S:'+socket.pSocket_.socketId+'] - site disconnected');
     }
 }
 
@@ -322,7 +322,7 @@ function connect_ws(ws_port, url_path) {
                     serialTerminal(socket, ws_msg.action, ws_msg.portPath, ws_msg.baudrate, ws_msg.msg); // action is "open", "close" or "msg"
                 } else if (ws_msg.type === "port-list-request") {
                     // send an updated port list (and continue on scheduled interval)
-                    log("Site requested port list for socket " + socket.pSocket_.socketId, mDbug);
+                    log('[S:'+socket.pSocket_.socketId+'] -> requested port list', mDbug);
                     sendPortList(socket);
                     portLister.push({socket: socket, scanner: setInterval(function() {sendPortList(socket)}, portListSendInterval)});
                 } else if (ws_msg.type === "hello-browser") {
@@ -410,6 +410,7 @@ function resetWX() {
 
 function scanWPorts() {
 // Generate list of current wired ports (filtered according to platform and type)
+    log('Scanning wired ports', mDbug);
     chrome.serial.getDevices(
         function(portlist) {
             let wn = [];
@@ -430,6 +431,7 @@ function scanWPorts() {
 
 function scanWXPorts() {
 // Generate list of current wireless ports
+    log('Scanning wireless ports', mDbug);
     discoverWirelessPorts();
     ageWirelessPorts();
 }
@@ -438,7 +440,7 @@ function sendPortList(socket) {
 // Find and send list of communication ports (filtered according to platform and type) to browser via socket
     let wn = [];
     let wln = [];
-    log("Sending updated port list on socket: " + socket.pSocket_.socketId, mDbug);
+    log('[S:'+socket.pSocket_.socketId+'] <- Sending port list', mDbug);
     // gather separated and sorted port lists (wired names and wireless names)
     ports.forEach(function(p) {if (p.isWired) {wn.push(p.name)} else {wln.push(p.name)}});
     wn.sort();
