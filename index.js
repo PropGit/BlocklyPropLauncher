@@ -266,15 +266,15 @@ function disconnect() {
     disableWX();
 }
 
-function updateStatus(connected) {
+function updateStatus(connected, socket) {
     if (connected) {
         $('sys-waiting').style.opacity=0.0;
         $('sys-connected').style.opacity=1.0;
-        log('BlocklyProp site connected');
+        log('BlocklyProp site connected on socket: ' + socket.pSocket_.socketId);
     } else {
         $('sys-waiting').style.opacity=1.0;
         $('sys-connected').style.opacity=0.0;
-        log('BlocklyProp site disconnected');
+        log('BlocklyProp site disconnected from socket: ' + socket.pSocket_.socketId);
     }
 }
 
@@ -322,13 +322,13 @@ function connect_ws(ws_port, url_path) {
                     serialTerminal(socket, ws_msg.action, ws_msg.portPath, ws_msg.baudrate, ws_msg.msg); // action is "open", "close" or "msg"
                 } else if (ws_msg.type === "port-list-request") {
                     // send an updated port list (and continue on scheduled interval)
-//                  log("Browser requested port-list for socket " + socket.pSocket_.socketId, mDbug);
+                    log("Site requested port list for socket " + socket.pSocket_.socketId, mDbug);
                     sendPortList(socket);
                     portLister.push({socket: socket, scanner: setInterval(function() {sendPortList(socket)}, portListSendInterval)});
                 } else if (ws_msg.type === "hello-browser") {
                     // handle unknown messages
                     helloClient(socket, ws_msg.baudrate || 115200);
-                    updateStatus(true);
+                    updateStatus(true, socket);
                 } else if (ws_msg.type === "debug-cts") {
                     // Handle clear-to-send
                     //TODO Add clear-to-send handling code
@@ -345,7 +345,6 @@ function connect_ws(ws_port, url_path) {
 
         socket.addEventListener('close', function() {
             // Browser socket closed; terminate its port scans and remove it from list of ports.
-            log("Browser socket closing: " + socket.pSocket_.socketId, mDbug);
             let Idx = portLister.findIndex(function(s) {return s.socket === socket});
             if (Idx > -1) {
                 clearInterval(portLister[Idx].scanner);
@@ -353,7 +352,7 @@ function connect_ws(ws_port, url_path) {
             }
             ports.forEach(function(p) {if (p.bSocket === socket) {p.bSocket = null}});
             if (!portLister.length) {
-                updateStatus(false);
+                updateStatus(false, socket);
                 // chrome.app.window.current().drawAttention();  //Disabled to prevent unnecessary user interruption
             }
         });
@@ -439,7 +438,7 @@ function sendPortList(socket) {
 // Find and send list of communication ports (filtered according to platform and type) to browser via socket
     let wn = [];
     let wln = [];
-//    log("sendPortList() for socket " + socket.pSocket_.socketId, mDbug);
+    log("Sending updated port list on socket: " + socket.pSocket_.socketId, mDbug);
     // gather separated and sorted port lists (wired names and wireless names)
     ports.forEach(function(p) {if (p.isWired) {wn.push(p.name)} else {wln.push(p.name)}});
     wn.sort();
