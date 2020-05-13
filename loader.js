@@ -103,72 +103,76 @@ function loadPropeller(sock, portName, action, payload, debug) {
      payload is base-64 encoded .elf, .binary, or .eeprom data containing the Propeller Application image
      debug is true if a terminal is intended to connect to the Propeller after download; false otherwise*/
 
-    let binImage;
+    return new Promise(function(resolve) {
+        let binImage;
 
-    if (payload) {
-        //Extract Propeller Application from payload
-        binImage = parseFile(payload);
-        if (binImage.message !== undefined) {log("Error: " + binImage.message, mAll, sock); return;}
-    } else {
-        binImage = buf2ab(bin);
-    }
-
-    // Look for an existing port
-    let port = findPort(byName, portName);
-    if (port) {
-        // Port found
-        let connect;
-        let originalBaudrate;
-
-        if (port.isWired) {
-            if (port.connId) {
-                // Connection exists, prep to reuse it
-                originalBaudrate = port.baud;
-                updatePort(port, {mode: "programming", bSocket: sock});
-                connect = function() {return changeBaudrate(port, initialBaudrate)}
-            } else {
-                // No connection yet, prep to create one
-                originalBaudrate = initialBaudrate;
-                connect = function() {return openPort(sock, portName, initialBaudrate, "programming")}
-            }
+        if (payload) {
+            //Extract Propeller Application from payload
+            binImage = parseFile(payload);
+            if (binImage.message !== undefined) {log("Error: " + binImage.message, mAll, sock); return;}
         } else {
-            //TODO Retrieve actual current baudrate
-            originalBaudrate = initialBaudrate;
-            updatePort(port, {mode: "programming", bSocket: sock});
-            connect = function() {return Promise.resolve()};
+            binImage = buf2ab(bin);
         }
-        // Use connection to download application to the Propeller
-        connect()
-            .then(function() {listen(port, true)})                                                                  //Enable listener
-            .then(function() {log(notice(000, ["Scanning port " + portName]), mUser, sock)})                        //Notify what port we're using
-            .then(function() {return talkToProp(sock, port, binImage, action === 'EEPROM')})                        //Download user application to RAM or EEPROM
-            .then(function() {return changeBaudrate(port, originalBaudrate)})                                       //Restore original baudrate
-            .then(function() {                                                                                      //Success!  Open terminal or graph if necessary
-                listen(port, false);                                                                                //Disable listener
-                port.mode = (debug !== "none") ? "debug" : "programming";
-                log(notice(nsDownloadSuccessful), mAll, sock);
-                if (sock && debug !== "none") {                                                                     //If debug needed, open terminal/graph
-                    sock.send(JSON.stringify({type:"ui-command", action:(debug === "term") ? "open-terminal" : "open-graph"}));
-                    sock.send(JSON.stringify({type:"ui-command", action:"close-compile"}));
-                } else {                                                                                            //Else
-                    updatePort(port, {mode: "none"});                                                               //  Clear port mode
-                    if (port.isWireless) closePort(port, false).catch(function(e) {log(e.message, mAll, sock);})    //  Close Telnet port (if wireless)
+
+        // Look for an existing port
+        let port = findPort(byName, portName);
+        if (port) {
+            // Port found
+            let connect;
+            let originalBaudrate;
+
+            if (port.isWired) {
+                if (port.connId) {
+                    // Connection exists, prep to reuse it
+                    originalBaudrate = port.baud;
+                    updatePort(port, {mode: "programming", bSocket: sock});
+                    connect = function() {return changeBaudrate(port, initialBaudrate)}
+                } else {
+                    // No connection yet, prep to create one
+                    originalBaudrate = initialBaudrate;
+                    connect = function() {return openPort(sock, portName, initialBaudrate, "programming")}
                 }
-            })                                                                                                      //Error? Disable listener and display error
-            .catch(function(e) {
-                listen(port, false);
-                log(e.message, mAll, sock);
-                log(notice(neDownloadFailed), mAll, sock);
-                updatePort(port, {mode: "none"});
-                if ((port.isWired && port.connId) || port.isWireless) {return changeBaudrate(port, originalBaudrate)}
-            })
-            .catch(function(e) {log(e.message, mAll, sock)})
-            .then(function() {if (port.isWireless) return closePort(port, false)})
-            .catch(function(e) {log(e.message, mAll, sock);});
-    } else {
-        // Port not found
-        log(notice(neCanNotFindPort, [portName]), mAll, sock);
-    }
+            } else {
+                //TODO Retrieve actual current baudrate
+                originalBaudrate = initialBaudrate;
+                updatePort(port, {mode: "programming", bSocket: sock});
+                connect = function() {return Promise.resolve()};
+            }
+            // Use connection to download application to the Propeller
+            connect()
+                .then(function() {listen(port, true)})                                                                  //Enable listener
+                .then(function() {log(notice(000, ["Scanning port " + portName]), mUser, sock)})                        //Notify what port we're using
+                .then(function() {return talkToProp(sock, port, binImage, action === 'EEPROM')})                        //Download user application to RAM or EEPROM
+                .then(function() {return changeBaudrate(port, originalBaudrate)})                                       //Restore original baudrate
+                .then(function() {                                                                                      //Success!  Open terminal or graph if necessary
+                    listen(port, false);                                                                                //Disable listener
+                    port.mode = (debug !== "none") ? "debug" : "programming";
+                    log(notice(nsDownloadSuccessful), mAll, sock);
+                    if (sock && debug !== "none") {                                                                     //If debug needed, open terminal/graph
+                        sock.send(JSON.stringify({type:"ui-command", action:(debug === "term") ? "open-terminal" : "open-graph"}));
+                        sock.send(JSON.stringify({type:"ui-command", action:"close-compile"}));
+                    } else {                                                                                            //Else
+                        updatePort(port, {mode: "none"});                                                               //  Clear port mode
+                        if (port.isWireless) closePort(port, false).catch(function(e) {log(e.message, mAll, sock);})    //  Close Telnet port (if wireless)
+                        resolve(); /* loadPropeller */
+                    }
+                })                                                                                                      //Error? Disable listener and display error
+                .catch(function(e) {
+                    listen(port, false);
+                    log(e.message, mAll, sock);
+                    log(notice(neDownloadFailed), mAll, sock);
+                    updatePort(port, {mode: "none"});
+                    if ((port.isWired && port.connId) || port.isWireless) {return changeBaudrate(port, originalBaudrate)}
+                })
+                .catch(function(e) {log(e.message, mAll, sock); resolve(); /* loadPropeller */})
+                .then(function() {if (port.isWireless) resolve(); /* loadPropeller */ return closePort(port, false)})
+                .catch(function(e) {log(e.message, mAll, sock);});
+        } else {
+            // Port not found
+            log(notice(neCanNotFindPort, [portName]), mAll, sock);
+            resolve(); /* loadPropeller */
+        }
+    })
 }
 
 function listen(port, engage) {

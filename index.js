@@ -316,7 +316,9 @@ function connect_ws(ws_port, url_path) {
                 if (ws_msg.type === "load-prop") {
                     // load the propeller
                     log('Received Propeller Application for ' + ws_msg.action);
-                    setTimeout(function() {loadPropeller(socket, ws_msg.portPath, ws_msg.action, ws_msg.payload, ws_msg.debug)}, 10);  // success is a JSON that the browser generates and expects back to know if the load was successful or not
+                    haltTimedEvents()
+                        .then(function() {return loadPropeller(socket, ws_msg.portPath, ws_msg.action, ws_msg.payload, ws_msg.debug)})
+                        .then(function() {resumeTimedEvents()});
                 } else if (ws_msg.type === "serial-terminal") {
                     // open or close the serial port for terminal/debug
                     serialTerminal(socket, ws_msg.action, ws_msg.portPath, ws_msg.baudrate, ws_msg.msg); // action is "open", "close" or "msg"
@@ -392,20 +394,43 @@ function enableWX() {
     }
 }
 
-function disableWX() {
-//Disable wireless port scanning
+function disableWX(retainWXPorts) {
+/* Disable wireless port scanning
+   retainWXPorts [optional] - true = keep list of existing wireless ports; false (default) = delete list of existing wireless ports */
     if(wxScannerInterval) {
         clearInterval(wxScannerInterval);
         wxScannerInterval = null;
     }
-    $('wx-list').innerHTML = '';
-    deleteAllWirelessPorts();
+    if (!retainWXPorts) {
+        $('wx-list').innerHTML = '';
+        deleteAllWirelessPorts();
+    }
 }
 
 function resetWX() {
 //Cycle WX scanning (off, then on again after delay to receive and clear possible in-progress responses)
     disableWX();
     wxEnableDelay = setTimeout(enableWX, 500);
+}
+
+function haltTimedEvents() {
+//Halt timed events.  Restart with resumeTimedEvents().
+  //Disable wired and wireless port scanning
+    return new Promise(function(resolve) {
+        disableW();
+        disableWX(true);
+        resolve();
+    })
+}
+
+function resumeTimedEvents() {
+//Resume timed events that were stopped via haltTimedEvents().
+    //Enable wired and wireless port scanning
+    return new Promise(function(resolve) {
+        enableW();
+        enableWX();
+        resolve();
+    })
 }
 
 function scanWPorts() {
@@ -454,8 +479,8 @@ function sendPortList(socket) {
     }
 }
 
-
 function helloClient(sock, baudrate) {
+    log('trx hello', mDbug);
     var msg_to_send = {type:'hello-client', version:clientVersion};
     sock.send(JSON.stringify(msg_to_send));
 }
