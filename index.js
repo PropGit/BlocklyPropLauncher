@@ -417,6 +417,7 @@ function haltTimedEvents() {
 //Halt timed events.  Restart with resumeTimedEvents().
   //Disable wired and wireless port scanning
     return new Promise(function(resolve) {
+        log('Halting timed events', mDbug);
         disableW();
         disableWX(true);
         resolve();
@@ -427,6 +428,7 @@ function resumeTimedEvents() {
 //Resume timed events that were stopped via haltTimedEvents().
     //Enable wired and wireless port scanning
     return new Promise(function(resolve) {
+        log('Resuming timed events', mDbug);
         enableW();
         enableWX();
         resolve();

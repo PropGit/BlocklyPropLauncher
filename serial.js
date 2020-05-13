@@ -316,7 +316,9 @@ function debugErrorReceiver(info) {
         switch (info.error) {
             case "disconnected":
             case "device_lost" :
-            case "system_error": deletePort(byCID, info.connectionId);
+//            case "system_error":  //!!! Removed because system error was occurring for unknown reasons
+                log('Error Receiver: ' + info.error);
+                deletePort(byCID, info.connectionId);
         }
 //        log("Error: PortID "+info.connectionId+" "+info.error, mDeep);
     } else {
