@@ -310,13 +310,13 @@ function debugReceiver(info) {
 }
 
 //TODO !!! This is no longer a pure-wired-serial function; decide what to do long-term
-function debugErrorReceiver(info) {
-// Wired and wireless receive error listener.
+function serialError(info) {
+// Wired and wireless serial error listener.
     if (info.hasOwnProperty("connectionId")) {
         switch (info.error) {
             case "disconnected":
             case "device_lost" :
-//            case "system_error":  //!!! Removed because system error was occurring for unknown reasons
+            case "system_error":  //!!! Removed because system error was occurring for unknown reasons
                 log('Error Receiver: ' + info.error);
                 deletePort(byCID, info.connectionId);
         }
@@ -343,4 +343,4 @@ function debugErrorReceiver(info) {
 }
 
 chrome.serial.onReceive.addListener(debugReceiver);
-chrome.serial.onReceiveError.addListener(debugErrorReceiver);
+chrome.serial.onReceiveError.addListener(serialError);
