@@ -150,14 +150,20 @@ document.addEventListener('DOMContentLoaded', function() {
     $('version-text').innerHTML = 'v' + clientVersion;
 
     // Determine if running wrapped in nwjs
+    log('Checking for node', mDbug);
+    log('typeof process: ' + typeof process, mDbug);
+    log('typeof require: ' + typeof require, mDbug);
+    log('typeof nw: ' + typeof nw, mDbug);
     if (typeof process !== 'undefined' && typeof require !== 'undefined') {
         //We're running in node...
+        log('Running in node', mDbug);
         try { //Are we running in nwjs?
             isNwjs = (typeof require('nw.gui') !== 'undefined');
         } catch(e) {
             isNwjs = false;
         }
     }
+    log('Running on nwjs?' + isNwjs, mDbug);
 
     // Restore settings from storage (if possible)
     if(chrome.storage) {
