@@ -106,6 +106,7 @@ const pfMac = 3;
 const pfWin = 4;
 var platform = pfUnk;
 var platformStr = ['Unknown', 'Chrome', 'Linux', 'macOS', 'Windows'];
+var isNwjs = false;
 
 // Windows default port origin
 const winPortOrigin = '\\\\.\\';
@@ -136,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Previous subnet mask (for future comparison)
     var sm = null;
 
-    // Determine platform
+    // Determine platform and set friendly text on window
     chrome.runtime.getPlatformInfo(function(platformInfo) {
         if (!chrome.runtime.lastError) {
             let os = platformInfo.os;
@@ -145,7 +146,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Note version on window
     $('version-text').innerHTML = 'v' + clientVersion;
+
+    // Determine if running wrapped in nwjs
+    if (typeof process !== 'undefined' && typeof require !== 'undefined') {
+        //We're running in node...
+        try { //Are we running in nwjs?
+            isNwjs = (typeof require('nw.gui') !== 'undefined');
+        } catch(e) {
+            isNwjs = false;
+        }
+    }
 
     // Restore settings from storage (if possible)
     if(chrome.storage) {
@@ -181,7 +193,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     $('open-blocklypropsolo').onclick = function() {
-        chrome.browser.openTab({ url: "https://solo.parallax.com/"});
+        if (isNwjs) {
+            nw.Shell.openExternal('https://solo.parallax.com/');
+        } else {
+            chrome.browser.openTab({ url: "https://solo.parallax.com/"});
+        }
     };
 
     // TODO: re-write this to use onblur and/or onchange to auto-save.
