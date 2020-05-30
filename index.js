@@ -342,6 +342,7 @@ function updatePreferredPort(port, socket) {
            lister.prefPort = {name: port, exists: true};
            // Since a new port selection was made, set all existing ports to non-new status - applies globally to all connected browsers (sockets)
            clearNewPortStatus();
+           log(' : Set preferred port to ' + port, mDeep, socket);
        }
    }
    return isNewPort;
@@ -425,7 +426,6 @@ function connect_ws(ws_port, url_path) {
                     serialTerminal(socket, ws_msg.action, ws_msg.portPath, ws_msg.baudrate, ws_msg.msg); // action is "open", "close" or "msg"
                 } else if (ws_msg.type === "pref-port") {
                     // user selected a new preferred port
-                    log('User selected preferred port: ' + ws_msg.portPath, mDbug, socket, 1);
                     if (updatePreferredPort(ws_msg.portPath, socket)) {sendPortList(socket)};
                 } else if (ws_msg.type === "port-list-request") {
                     // send an updated port list (and continue on scheduled interval)
@@ -466,6 +466,7 @@ function connect_ws(ws_port, url_path) {
 function addPortLister(socket) {
 //Create new port lister (to send port lists to browser on a timed interval) using last saved preferred port as the default.
 //socket is the browser socket to send updates to.
+    log(' : Preferred port is ' + storedPreferredPort, mDeep, socket);
     startPortListerScanner(portLister.push({socket: socket, prefPort: {name: storedPreferredPort, exists: false}})-1);
 }
 
