@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if(chrome.storage) {
         chrome.storage.local.get(null, function(result) {
             if (!chrome.runtime.lastError) {
-                log('Retrieved Launcher settings', mDbug);
+                log('Retrieved Launcher settings for id: ' + chrome.runtime.id, mDbug);
                 // Stored values retrieved
                 $('bpc-port').value = result.s_port || defaultPort;
                 $('bpc-url').value = result.s_url || defaultURL;
