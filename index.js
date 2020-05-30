@@ -196,8 +196,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Restore settings from storage (if possible)
     if(chrome.storage) {
-        chrome.storage.sync.get(null, function(result) {
+        chrome.storage.local.get(null, function(result) {
             if (!chrome.runtime.lastError) {
+                log('Retrieved Launcher settings', mDbug);
                 // Stored values retrieved
                 $('bpc-port').value = result.s_port || defaultPort;
                 $('bpc-url').value = result.s_url || defaultURL;
@@ -239,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
         disconnect();
         closeServer();
         if(chrome.storage) {
-            chrome.storage.sync.set({'s_port':$('bpc-port').value, 's_url':$('bpc-url').value}, function() {if (chrome.runtime.lastError) {storageError()}});
+            chrome.storage.local.set({'s_port':$('bpc-port').value, 's_url':$('bpc-url').value}, function() {if (chrome.runtime.lastError) {storageError()}});
         }
         connect();
     };
@@ -250,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sm = sm32bit();
             if (chrome.storage) {
                 // Storage available
-                chrome.storage.sync.set({'sm0':$('sm0').value, 'sm1':$('sm1').value, 'sm2':$('sm2').value, 'sm3':$('sm3').value}, function () {
+                chrome.storage.local.set({'sm0':$('sm0').value, 'sm1':$('sm1').value, 'sm2':$('sm2').value, 'sm3':$('sm3').value}, function () {
                     if (chrome.runtime.lastError) {storageError()}
                 })
             }
@@ -276,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
         verboseLogging = $('verbose-logging').checked;
         log((verboseLogging) ? 'Verbose logging enabled' : 'Verbose logging disabled');
         if(chrome.storage) {
-            chrome.storage.sync.set({'en_vlog': verboseLogging}, function () {if (chrome.runtime.lastError) {storageError()}});
+            chrome.storage.local.set({'en_vlog': verboseLogging}, function () {if (chrome.runtime.lastError) {storageError()}});
         }
     };
 
@@ -288,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
             disableWX();
         }
         if(chrome.storage) {
-            chrome.storage.sync.set({'en_wx': $('wx-allow').checked}, function () {if (chrome.runtime.lastError) {storageError()}});
+            chrome.storage.local.set({'en_wx': $('wx-allow').checked}, function () {if (chrome.runtime.lastError) {storageError()}});
         }
     };
 
@@ -332,7 +333,7 @@ function updatePreferredPort(port, socket) {
        if (port !== storedPreferredPort) {
            storedPreferredPort = port;
            if (chrome.storage) {
-               chrome.storage.sync.set({'pref_port': storedPreferredPort}, function () {if (chrome.runtime.lastError) {storageError()}});
+               chrome.storage.local.set({'pref_port': storedPreferredPort}, function () {if (chrome.runtime.lastError) {storageError()}});
            }
        }
        // Next, set as preferred for this socket, if new (for this socket)
