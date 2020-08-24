@@ -317,7 +317,10 @@ function serialError(info) {
         switch (info.error) {
             case "disconnected":
             case "device_lost" :
-            case "system_error": deletePort(byCID, info.connectionId);
+            case "system_error": {
+                log("Port Error: ID " + info.connectionId + " - " + info.error, mDbug);
+                //deletePort(byCID, info.connectionId);
+            }
         }
 //        log("Error: PortID "+info.connectionId+" "+info.error, mDeep);
     } else {
