@@ -298,7 +298,6 @@ function talkToProp(sock, port, binImage, toEEPROM) {
                 Promise.resolve()
                     .then(function() {                   resetPropComm(port, mblDeliveryTime, null, null, true);})        //Reset propComm object
                     .then(function() {if (port.isWired) {log("Generating reset signal", mDeep);}})                        //If wired...
-                    .then(function() {if (port.isWired) {return unPause(port);}})                                         //    Un-pause the port (safety measure)
                     .then(function() {if (port.isWired) {return setControl(port, {dtr: false});}})                        //    Start Propeller Reset Signal
                     .then(function() {if (port.isWired) {return flush(port);}})                                           //    Flush transmit/receive buffers (during Propeller reset)
                     .then(function() {if (port.isWired) {return setControl(port, {dtr: true});}})                         //    End Propeller Reset
