@@ -191,18 +191,7 @@ function setControl(port, options) {
           if (controlResult) {
             resolve();
           } else {
-            closePort(port)
-                .then(function() {return openPort(null, "COM6", 115200, "programming");})
-                .then(function() {
-                  chrome.serial.setControlSignals(port.connId, options, function(controlResult) {
-                      if (controlResult) {
-                          resolve();
-                      } else {
-                          reject(Error(notice(000, ["Can not set port " + port.name + "'s options" + (options.hasOwnProperty('dtr') ? " - DTR: " + options.dtr : "")])));
-                      }
-                  });
-              })
-                .catch(reject(Error(notice(000, ["Can not reopen port"]))))
+            reject(Error(notice(000, ["Can not set port " + port.name + "'s options" + (options.hasOwnProperty('dtr') ? " - DTR: " + options.dtr : "")])));
           }
         });
     });
