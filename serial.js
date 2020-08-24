@@ -25,26 +25,13 @@ function openPort(sock, portName, baudrate, connMode) {
         if (port) {
             if (port.isWired) { /*Wired port*/
                 if (port.connId) {
-                    //Already open; ensure correct baudrate, socket, and connMode, then resolve.
-                    updatePort(port, {bSocket: sock, mode: connMode, baud: baudrate})
-                        .then(function() {resolve()})
+                    //Already open; close, then reopen it
+                    closePort(port)
+                        .then(function() {doOpenPort()})
                         .catch(function(e) {reject(e)});
                 } else {
                     //Not already open; attempt to open it
-                    chrome.serial.connect(port.path, {bitrate: baudrate, dataBits: 'eight', parityBit: 'no', stopBits: 'one', ctsFlowControl: false},
-                        function (openInfo) {
-                            if (!chrome.runtime.lastError) {
-                                // No error; update serial port object
-                                updatePort(port, {connId: openInfo.connectionId, bSocket: sock, mode: connMode});
-                                port.baud = baudrate;  //Update baud; does not use updatePort() to avoid unnecessary port activity
-                                log("Port " + portName + " open with ID " + openInfo.connectionId + " at " + baudrate + " baud", mDbug);
-                                resolve();
-                            } else {
-                                // Error
-                                reject(Error(notice(neCanNotOpenPort, [port.name])));
-                            }
-                        }
-                    );
+                    doOpenPort();
                 }
             } else {            /*Wireless port*/
                 openSocket(port, false)
@@ -57,6 +44,23 @@ function openPort(sock, portName, baudrate, connMode) {
             reject(Error(notice(neCanNotFindPort, [portName])));
         }
     });
+
+    function doOpenPort() {
+        chrome.serial.connect(port.path, {bitrate: baudrate, dataBits: 'eight', parityBit: 'no', stopBits: 'one', ctsFlowControl: false},
+            function (openInfo) {
+                if (!chrome.runtime.lastError) {
+                    // No error; update serial port object
+                    updatePort(port, {connId: openInfo.connectionId, bSocket: sock, mode: connMode});
+                    port.baud = baudrate;  //Update baud; does not use updatePort() to avoid unnecessary port activity
+                    log("Port " + portName + " open with ID " + openInfo.connectionId + " at " + baudrate + " baud", mDbug);
+                    resolve();
+                } else {
+                    // Error
+                    reject(Error(notice(neCanNotOpenPort, [port.name])));
+                }
+            }
+        );
+    }
 }
 
 function openSocket(port, command) {
