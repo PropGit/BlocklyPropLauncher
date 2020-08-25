@@ -124,21 +124,27 @@ function loadPropeller(sock, portName, action, payload, debug) {
         haltTimedEvents();
 
         if (port.isWired) {
-            if (port.connId) {
+//            if (port.connId) {
                 // Connection exists, prep to reuse it
-                originalBaudrate = port.baud;
-                updatePort(port, {mode: "programming", bSocket: sock});
-                connect = function() {return changeBaudrate(port, initialBaudrate)}
-            } else {
+//                originalBaudrate = port.baud;
+//                updatePort(port, {mode: "programming", bSocket: sock});
+//                connect = function() {return changeBaudrate(port, initialBaudrate)}
+
+                //TODO Convert all calls to updatePort() to promise chains (because updatePort() returns a promise now
+//                updatePort(port, {mode: "programming", bSocket: sock})
+//                    .then(connect = function() {return changeBaudrate(port, initialBaudrate)});
+//            } else {
                 // No connection yet, prep to create one
                 originalBaudrate = initialBaudrate;
                 connect = function() {return openPort(sock, portName, initialBaudrate, "programming")}
-            }
+ //           }
         } else {
             //TODO Retrieve actual current baudrate
             originalBaudrate = initialBaudrate;
             updatePort(port, {mode: "programming", bSocket: sock});
             connect = function() {return Promise.resolve()};
+//            updatePort(port, {mode: "programming", bSocket: sock})
+//                .then(connect = function() {return Promise.resolve()});
         }
   //      let startTime = Date.now();
         // Use connection to download application to the Propeller
